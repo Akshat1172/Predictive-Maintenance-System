@@ -1,0 +1,32 @@
+# Virtual Environment
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML Models
+models/*.pkl
+models/*.joblib
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+
+# Test & coverage
+.pytest_cache/
+.coverage
+htmlcov/
