@@ -33,13 +33,15 @@ NUMERICAL_FEATURES: list[str] = [
 ]
 
 
-def create_preprocessor() -> ColumnTransformer:
+def create_preprocessor(scale_numeric: bool = True,) -> ColumnTransformer:
     """
     Create and fit the preprocessing pipeline.
 
-    The preprocessing pipeline performs:
-        - One-hot encoding on categorical features.
-        - Standard scaling on numerical features.
+        Parameters
+        ----------
+        scale_numeric : bool, default=True
+            If True, apply StandardScaler to numerical features.
+            If False, pass numerical features through unchanged.
 
     Returns
     -------
@@ -47,6 +49,11 @@ def create_preprocessor() -> ColumnTransformer:
         An unfitted preprocessing pipeline. Fit this pipeline only on
         the training data to avoid data leakage.
     """
+    numerical_transformer = (
+        StandardScaler()
+        if scale_numeric
+        else "passthrough"
+    )
 
     preprocessor = ColumnTransformer(
         transformers=[
@@ -58,7 +65,7 @@ def create_preprocessor() -> ColumnTransformer:
             ),
             (
                 "numerical",
-                StandardScaler(),
+                numerical_transformer,
                 NUMERICAL_FEATURES,
             ),
         ],
