@@ -1,12 +1,12 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 import pandas as pd
 
-from src.models.save_model import load_model
+from src.models.model_io import load_model
 
 
-REQUIRED_FEATURES = [
+FEATURE_COLUMNS: Final = [
     "Type",
     "Air temperature [K]",
     "Process temperature [K]",
@@ -15,13 +15,41 @@ REQUIRED_FEATURES = [
     "Tool wear [min]",
 ]
 
+VALID_MACHINE_TYPES: Final = {
+    "L",
+    "M",
+    "H",
+}
 
-def predict_failure(
+NUMERICAL_FEATURES: Final = [
+    "Air temperature [K]",
+    "Process temperature [K]",
+    "Rotational speed [rpm]",
+    "Torque [Nm]",
+    "Tool wear [min]",
+]
+
+
+def validate_machine_data(
     machine_data: dict[str, Any],
-    model_path: Path,
-) -> int:
-    missing_features = (
-        set(REQUIRED_FEATURES) - machine_data.keys()
+) -> None:
+    """
+    Validate the input machine data before prediction.
+
+    Parameters
+    ----------
+    machine_data : dict[str, Any]
+        Dictionary containing the machine features.
+
+    Raises
+    ------
+    ValueError
+        If required features are missing, the machine type is invalid,
+        or a numerical feature is not numeric.
+    """
+
+    missing_features = set(FEATURE_COLUMNS).difference(
+        machine_data.keys()
     )
 
     if missing_features:
@@ -29,11 +57,49 @@ def predict_failure(
             f"Missing required features: {sorted(missing_features)}"
         )
 
+    if machine_data["Type"] not in VALID_MACHINE_TYPES:
+        raise ValueError(
+            f"Type must be one of: {sorted(VALID_MACHINE_TYPES)}"
+        )
+
+    for feature in NUMERICAL_FEATURES:
+        value = machine_data[feature]
+
+        if not isinstance(value, (int, float)):
+            raise ValueError(
+                f"{feature} must be numeric."
+            )
+
+
+def predict_failure(
+    machine_data: dict[str, Any],
+    model_path: Path,
+) -> int:
+    """
+    Predict whether a machine will fail.
+
+    Parameters
+    ----------
+    machine_data : dict[str, Any]
+        Dictionary containing machine feature values.
+
+    model_path : Path
+        Path to the saved model pipeline.
+
+    Returns
+    -------
+    int
+        0 if no failure is predicted.
+        1 if failure is predicted.
+    """
+
+    validate_machine_data(machine_data)
+
     input_df = pd.DataFrame(
         [
             {
                 feature: machine_data[feature]
-                for feature in REQUIRED_FEATURES
+                for feature in FEATURE_COLUMNS
             }
         ]
     )
